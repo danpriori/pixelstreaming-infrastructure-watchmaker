@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Config,
     AllSettings,
@@ -9,7 +9,7 @@ export interface PixelStreamingWrapperProps {
     initialSettings?: Partial<AllSettings>;
 }
 
-export const PixelStreamingWrapper = ({
+export const PixelStreamingWrapperVendor = ({
     initialSettings
 }: PixelStreamingWrapperProps) => {
     // A reference to parent div element that the Pixel Streaming library attaches into:
@@ -80,7 +80,7 @@ export const PixelStreamingWrapper = ({
                         setClickToPlayVisible(false);
                     }}
                 >
-                    <div>Click to play</div>
+                    <div>Click to play - Vendor</div>
                 </div>
             )}
         </div>

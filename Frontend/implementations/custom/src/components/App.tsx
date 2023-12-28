@@ -1,6 +1,10 @@
-import { PixelStreamingWrapper } from './PixelStreamingWrapper';
+import { useState } from 'react';
+import { PixelStreamingWrapperUser } from './PixelStreamingWrapperUser';
+import { PixelStreamingWrapperVendor } from './PixelStreamingWrapperVendor';
 
 export const App = () => {
+    const [ userType, setUserType] = useState('');
+
     return (
         <div
             style={{
@@ -8,7 +12,11 @@ export const App = () => {
                 width: '100%'
             }}
         >
-            <PixelStreamingWrapper
+            {userType === '' && (
+            <div><button onClick={()=>setUserType('User')}>User</button><button onClick={()=>setUserType('Vendor')}>Vendor</button></div>
+            )}
+            {userType === 'User' && (
+            <PixelStreamingWrapperUser
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
@@ -18,6 +26,19 @@ export const App = () => {
                     WaitForStreamer: true
                 }}
             />
+            )}
+            {userType === 'Vendor' && (
+            <PixelStreamingWrapperVendor
+                initialSettings={{
+                    AutoPlayVideo: true,
+                    AutoConnect: true,
+                    ss: 'ws://localhost:80',
+                    StartVideoMuted: true,
+                    HoveringMouse: true,
+                    WaitForStreamer: true
+                }}
+            />
+            )}
         </div>
     );
 };

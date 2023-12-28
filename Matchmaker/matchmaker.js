@@ -1,5 +1,5 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
-var enableRedirectionLinks = true;
+var enableRedirectionLinks = false;
 var enableRESTAPI = true;
 
 const defaultConfig = {
@@ -104,7 +104,7 @@ if(config.EnableWebserver) {
 // it retry after a short period of time.
 function sendRetryResponse(res) {
 	// find check if a custom template should be used or the sample one
-	let html = fs.readFileSync(`${htmlDirectory}/queue/queue.html`, { encoding: 'utf8' })
+	let html = fs.readFileSync(`${htmlDirectory}/index.html`, { encoding: 'utf8' })
 	html = html.replace(/\$\{cirrusServers\.size\}/gm, cirrusServers.size)
 
 	res.setHeader('content-type', 'text/html')

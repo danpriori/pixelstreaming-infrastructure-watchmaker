@@ -9,8 +9,8 @@
     "watch": "npx webpack --watch",
     "serve": "webpack serve --config webpack.dev.js",
     "serve-prod": "webpack serve --config webpack.prod.js",
-    "build-all": "npm link ../../library && cd ../../library && npm run build && cd ../implementations/react && npm run build",
-    "build-dev-all": "npm link ../../library && cd ../../library && npm run build-dev && cd ../implementations/react && npm run build-dev"
+    "build-all": "npm link ../../library && cd ../../library && npm run build && cd ../implementations/custom && npm run build",
+    "build-dev-all": "npm link ../../library && cd ../../library && npm run build-dev && cd ../implementations/custom && npm run build-dev"
   },
   "devDependencies": {
     "@types/react": "^18.0.28",
