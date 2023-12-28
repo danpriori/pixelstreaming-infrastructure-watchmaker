@@ -6,6 +6,7 @@ var express = require('express');
 var app = express();
 
 const fs = require('fs');
+const { exec } = require('child_process');
 const path = require('path');
 const querystring = require('querystring');
 const bodyParser = require('body-parser');
@@ -562,6 +563,20 @@ function sanitizeStreamerId(id) {
 }
 
 function registerStreamer(id, streamer) {
+	// remove any existing streamer id
+	if (!!streamer.id) {
+		// notify any connected peers of rename
+		const renameMessage = { type: "streamerIDChanged", newID: id };
+		let clone = new Map(players);
+		for (let player of clone.values()) {
+			if (player.streamerId == streamer.id) {
+				logOutgoing(player.id, renameMessage);
+			 	player.sendTo(renameMessage);
+			 	player.streamerId = id; // reassign the subscription
+			}
+		}
+		streamers.delete(streamer.id);
+	}
 	// make sure the id is unique
 	const uniqueId = sanitizeStreamerId(id);
 	streamer.commitId(uniqueId);
@@ -574,6 +589,10 @@ function registerStreamer(id, streamer) {
 }
 
 function onStreamerDisconnected(streamer) {
+	if (!!streamer.idTimer) {
+		clearTimeout(streamer.idTimer);
+	}
+
 	if (!streamer.id || !streamers.has(streamer.id)) {
 		return;
 	}
@@ -683,13 +702,16 @@ streamerServer.on('connection', function (ws, req) {
 		console.error(`streamer ${streamer.id} connection error: ${error}`);
 		onStreamerDisconnected(streamer);
 		try {
-			ws.close(1006 /* abnormal closure */, error);
+			ws.close(1006 /* abnormal closure */, `streamer ${streamer.id} connection error: ${error}`);
 		} catch(err) {
 			console.error(`ERROR: ws.on error: ${err.message}`);
 		}
 	});
 
-	ws.send(JSON.stringify(clientConfig));
+	const configStr = JSON.stringify(clientConfig);
+	logOutgoing(streamer.id, configStr)
+	ws.send(configStr);
+
 	requestStreamerId(streamer);
 });
 
@@ -847,7 +869,7 @@ sfuServer.on('connection', function (ws, req) {
 		console.error(`SFU connection error: ${error}`);
 		onSFUDisconnected(playerComponent);
 		try {
-			ws.close(1006 /* abnormal closure */, error);
+			ws.close(1006 /* abnormal closure */, `SFU connection error: ${error}`);
 		} catch(err) {
 			console.error(`ERROR: ws.on error: ${err.message}`);
 		}
@@ -905,6 +927,7 @@ function onPlayerDisconnected(playerId) {
 	sendPlayersCount();
 	sendPlayerDisconnectedToFrontend();
 	sendPlayerDisconnectedToMatchmaker();
+	restartProcess();
 }
 
 playerMessageHandlers.set('subscribe', onPlayerMessageSubscribe);
@@ -975,7 +998,7 @@ playerServer.on('connection', function (ws, req) {
 
 	ws.on('error', function(error) {
 		console.error(`player ${playerId} connection error: ${error}`);
-		ws.close(1006 /* abnormal closure */, error);
+		ws.close(1006 /* abnormal closure */, `player ${playerId} connection error: ${error}`);
 		onPlayerDisconnected(playerId);
 
 		console.logColor(logging.Red, `Trying to reconnect...`);
@@ -984,7 +1007,11 @@ playerServer.on('connection', function (ws, req) {
 
 	sendPlayerConnectedToFrontend();
 	sendPlayerConnectedToMatchmaker();
-	player.ws.send(JSON.stringify(clientConfig));
+
+	const configStr = JSON.stringify(clientConfig);
+	logOutgoing(player.id, configStr)
+	player.ws.send(configStr);
+
 	sendPlayersCount();
 });
 
@@ -992,7 +1019,7 @@ function disconnectAllPlayers(streamerId) {
 	console.log(`unsubscribing all players on ${streamerId}`);
 	let clone = new Map(players);
 	for (let player of clone.values()) {
-		 if (player.streamerId == streamerId) {
+		if (player.streamerId == streamerId) {
 		 	// disconnect players but just unsubscribe the SFU
 		 	const sfuPlayer = getSFUForStreamer(streamerId);
 		 	if (sfuPlayer && player.id == sfuPlayer.id) {
@@ -1283,3 +1310,55 @@ function sendPlayerDisconnectedToMatchmaker() {
 		console.logColor(logging.Red, `ERROR sending clientDisconnected: ${err.message}`);
 	}
 }
+
+
+
+function callbackTasks(error, stdout, stderr) {
+    if (error) {
+        console.log(error.message, ' - ', stdout, ' - ', stderr)
+    }
+};
+
+function callbackApp(error, stdout, stderr) {
+    if (stdout) {
+        let EngineSplit = config.AppLocation.split("\\");
+        console.log('Task killed: ' + EngineSplit[EngineSplit.length - 1]);
+    }
+    if (error) {
+        console.log(error.message, ' - ', stdout, ' - ', stderr);
+    }
+    executeApp(1000);
+};
+
+function executeApp(delay = 1000) {
+    let EngineSplit = config.AppLocation.split("\\");
+    // TODO improve the exec response checker instead using timeouts for executing tasks that failed
+    setTimeout(() => {
+        console.log('Task restarting: ' + EngineSplit[EngineSplit.length - 1]);
+        exec(`${config.AppLocation} -PixelStreamingIP=127.0.0.1 -PixelStreamingPort=${config.StreamerPort} ${config.AppArgs}`, callbackTasks);
+    }, delay);
+}
+
+async function restartStreamer() {
+    const homedir = require('os').homedir();
+
+    restartProcess();
+
+    console.log('done ending last streamer');
+
+   // console.log(await deleteCookies());
+   // console.log('done deleting cookies');
+
+    console.log('done restarting (probably)');
+    return;
+};
+
+function restartProcess() {
+
+    // kill process
+    exec('taskkill /F /IM \"' + config.ShippingProcess + '\"', callbackTasks);
+    let EngineSplit = config.AppLocation.split("\\");
+    exec('taskkill /F /IM \"' + EngineSplit[EngineSplit.length - 1] + '\"', callbackApp);
+}
+
+restartProcess();
