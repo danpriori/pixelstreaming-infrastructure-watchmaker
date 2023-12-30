@@ -27,6 +27,9 @@
   },
   "dependencies": {
     "@epicgames-ps/lib-pixelstreamingfrontend-ue5.3": "^1.0.1",
+    "@epicgames-ps/lib-pixelstreamingfrontend-ui-ue5.3": "^1.0.1",
+    "antd": "^5.12.5",
+    "html-react-parser": "^5.0.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

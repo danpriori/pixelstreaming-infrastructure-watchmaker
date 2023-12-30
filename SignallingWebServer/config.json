@@ -16,8 +16,8 @@
 	"StreamerPort": 8888,
 	"SFUPort": 8889,
 	"MaxPlayerCount": -1,
-	"AppLocation": "C:\\Users\\DanielPriori\\Documents\\BuiltPackages\\test3\\Windows\\WatchmakerFakeApp.exe.lnk",
-    "AppArgs": "-AudioMixer -renderOffScreen -ResX=2560 -ResY=1440 -ForceRes -NvEncMaxEncodeWidth=2560 -NvEncMaxEncodeHeight=1440 -NvEncH264ConfigLevel=NV_ENC_LEVEL_H264_51",
+	"AppLocation": "C:\\Users\\DanielPriori\\Documents\\BuiltPackages\\test3\\Windows\\WatchmakerFakeApp.exe",
+    "AppArgs": "-AudioMixer -renderOffScreen -NvEncH264ConfigLevel=NV_ENC_LEVEL_H264_51",
     "ShippingProcess": "WatchmakerFakeApp.exe",
     "PeerConnectionOptions": "{ \"iceServers\": [{\"urls\": [\"stun:stun1.l.google.com:19302\",\"stun:stun2.l.google.com:19302\", \"stun:stun3.l.google.com:19302\", \"stun:stun4.l.google.com:19302\"]}]}"
 }
