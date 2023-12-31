@@ -41,6 +41,8 @@ export const PixelStreamingWrapperUser = ({
             });
 
             stream.addEventListener('playStreamRejected', () => {
+                console.log(' playStreamRejected ');
+
                 setClickToPlayVisible(true);
             });
 
@@ -53,10 +55,15 @@ export const PixelStreamingWrapperUser = ({
                 onColorModeChanged: (isLightMode) => PixelStreamingApplicationStyles.setColorMode(isLightMode)
             });
 
+            console.log(' config ', config, stream, stream.config.getOptionSettings());
+
             application.uiFeaturesElement.style.position = 'absolute';
             application.uiFeaturesElement.style.top = '0px';
+
             playerUI.current.appendChild(application.rootElement);
+
             setApplication(application);
+
             // Clean up on component unmount:
             return () => {
                 try {
@@ -96,6 +103,7 @@ export const PixelStreamingWrapperUser = ({
                     }}
                     onClick={() => {
                         pixelStreaming?.play();
+                        console.log(' CLICK and request play ')
                         setClickToPlayVisible(false);
                     }}
                 >

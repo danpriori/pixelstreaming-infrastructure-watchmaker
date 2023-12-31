@@ -201,7 +201,9 @@ const matchmaker = net.createServer((connection) => {
 				address: message.address,
 				port: message.port,
 				numConnectedClients: 0,
-				lastPingReceived: Date.now()
+				lastPingReceived: Date.now(),
+				maxUsers: config.maxUsers,
+				maxVendors: config.maxVendors,
 			};
 			cirrusServer.ready = message.ready === true;
 

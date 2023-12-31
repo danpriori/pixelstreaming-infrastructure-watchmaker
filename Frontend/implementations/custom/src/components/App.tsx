@@ -20,7 +20,7 @@ export const App = () => {
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
-                    ss: 'ws://localhost:80',
+                    ss: 'ws://localhost:90',
                     StartVideoMuted: true,
                     HoveringMouse: true,
                     WaitForStreamer: true
@@ -32,7 +32,7 @@ export const App = () => {
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
-                    ss: 'ws://localhost:80',
+                    ss: 'ws://localhost:90',
                     StartVideoMuted: true,
                     HoveringMouse: true,
                     WaitForStreamer: true
