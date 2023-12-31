@@ -4,6 +4,6 @@
 	"MatchmakerPort": 9999,
 	"LogToFile": true,
 	"EnableWebserver": true,
-	"maxUsers": 1,
-	"maxVendors": 1
+	"MaxUsersPerCirrus": 1,
+	"MaxVendorsPerCirrus": 1
 }

@@ -16,6 +16,7 @@
 	"StreamerPort": 8888,
 	"SFUPort": 8889,
 	"MaxPlayerCount": 2,
+	"MaxStreamers": 1,
 	"AppLocation": "C:\\Users\\DanielPriori\\Documents\\BuiltPackages\\test3\\Windows\\WatchmakerFakeApp.exe",
     "AppArgs": "-AudioMixer -renderOffScreen -NvEncH264ConfigLevel=NV_ENC_LEVEL_H264_51",
     "ShippingProcess": "WatchmakerFakeApp.exe",

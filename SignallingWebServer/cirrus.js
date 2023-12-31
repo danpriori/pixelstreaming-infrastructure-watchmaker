@@ -103,6 +103,7 @@ var matchmakerPort = 9999;
 var matchmakerRetryInterval = 5;
 var matchmakerKeepAliveInterval = 30;
 var maxPlayerCount = -1;
+var maxStreamers = 1;
 
 var gameSessionId;
 var userSessionId;
@@ -161,6 +162,10 @@ try {
 
 	if (typeof config.MaxPlayerCount != 'undefined') {
 		maxPlayerCount = config.MaxPlayerCount;
+	}
+
+	if (typeof config.MaxStreamers != 'undefined') {
+		maxStreamers = config.MaxStreamers;
 	}
 } catch (e) {
 	console.error(e);
@@ -654,6 +659,8 @@ function forwardStreamerMessageToPlayer(streamer, msg) {
 }
 
 let streamerMessageHandlers = new Map();
+let streamersCount = 0;
+
 streamerMessageHandlers.set('endpointId', onStreamerMessageId);
 streamerMessageHandlers.set('ping', onStreamerMessagePing);
 streamerMessageHandlers.set('offer', forwardStreamerMessageToPlayer);
@@ -665,6 +672,18 @@ streamerMessageHandlers.set('layerPreference', onStreamerMessageLayerPreference)
 console.logColor(logging.Green, `WebSocket listening for Streamer connections on :${streamerPort}`)
 let streamerServer = new WebSocket.Server({ port: streamerPort, backlog: 1 });
 streamerServer.on('connection', function (ws, req) {
+
+	
+	console.logColor(logging.Yellow, `Streamer connection requested: ${req.socket.remoteAddress}`);
+	if (streamersCount + 1 > maxStreamers && maxStreamers !== -1)
+	{
+		console.logColor(logging.Red, `new streaming exceed the max number of streamings for each SS. Max: ${maxStreamers}, Current ${streamersCount}`);
+		ws.close(1013, `too many streamers on this cirrus. max: ${maxStreamers}, current: ${streamersCount}`);
+		return;
+	}
+	
+	++streamersCount;
+
 	console.logColor(logging.Green, `Streamer connected: ${req.connection.remoteAddress}`);
 	sendStreamerConnectedToMatchmaker();
 
@@ -927,7 +946,11 @@ function onPlayerDisconnected(playerId) {
 	sendPlayersCount();
 	sendPlayerDisconnectedToFrontend();
 	sendPlayerDisconnectedToMatchmaker();
-	restartProcess();
+
+	//Only flush the process when all players are disconnected from the streamer.
+	if (playerCount == 0) {
+		restartStreamer();
+	}
 }
 
 playerMessageHandlers.set('subscribe', onPlayerMessageSubscribe);
@@ -1342,7 +1365,7 @@ function executeApp(delay = 1000) {
 async function restartStreamer() {
     const homedir = require('os').homedir();
 
-    restartProcess();
+    resetProcess();
 
     console.log('done ending last streamer');
 
@@ -1353,12 +1376,15 @@ async function restartStreamer() {
     return;
 };
 
-function restartProcess() {
+function resetProcess() {
 
     // kill process
-    exec('taskkill /F /IM \"' + config.ShippingProcess + '\"', callbackTasks);
+    exec('taskkill /IM \"' + config.ShippingProcess + '\" /T /F ', callbackTasks);
     let EngineSplit = config.AppLocation.split("\\");
-    exec('taskkill /F /IM \"' + EngineSplit[EngineSplit.length - 1] + '\"', callbackApp);
+    exec('taskkill /IM \"' + EngineSplit[EngineSplit.length - 1] + '\" /T /F ', callbackApp);
+
+	streamersCount = 0; // improve to support multiple streamers to allow many sessions per Cirrus/SS server
+
 }
 
-restartProcess();
+resetProcess();
