@@ -972,6 +972,8 @@ playerServer.on('connection', function (ws, req) {
 	const urlParams = new URLSearchParams(parsedUrl.search);
 	const whoSendsOffer = urlParams.has('OfferToReceive') && urlParams.get('OfferToReceive') !== 'false' ? WhoSendsOffer.Browser : WhoSendsOffer.Streamer;
 
+	const playerType = urlParams.has('PlayerType') && urlParams.get('PlayerType') !== '' ? urlParams.get('PlayerType') : 'User';
+
 	if (playerCount + 1 > maxPlayerCount && maxPlayerCount !== -1)
 	{
 		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCount}, Current ${playerCount}`);
@@ -1029,7 +1031,7 @@ playerServer.on('connection', function (ws, req) {
 	});
 
 	sendPlayerConnectedToFrontend();
-	sendPlayerConnectedToMatchmaker();
+	sendPlayerConnectedToMatchmaker(playerType);
 
 	const configStr = JSON.stringify(clientConfig);
 	logOutgoing(player.id, configStr)
@@ -1306,12 +1308,13 @@ function sendStreamerDisconnectedToMatchmaker() {
 
 // The Matchmaker will not re-direct clients to this Cirrus server if any client
 // is connected.
-function sendPlayerConnectedToMatchmaker() {
+function sendPlayerConnectedToMatchmaker(playerType) {
 	if (!config.UseMatchmaker)
 		return;
 	try {
 		message = {
-			type: 'clientConnected'
+			type: 'clientConnected',
+			playerType: playerType
 		};
 		matchmaker.write(JSON.stringify(message));
 	} catch (err) {

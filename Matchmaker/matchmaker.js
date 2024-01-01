@@ -258,7 +258,7 @@ const matchmaker = net.createServer((connection) => {
 			cirrusServer = cirrusServers.get(connection);
 			if(cirrusServer) {
 				cirrusServer.numConnectedClients++;
-				console.log(`Client connected to Cirrus server ${cirrusServer.address}:${cirrusServer.port}`);
+				console.log(`Client connected to Cirrus server ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
 			} else {
 				disconnect(connection);
 			}

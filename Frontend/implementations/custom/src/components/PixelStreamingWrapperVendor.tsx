@@ -8,6 +8,7 @@ import { Application, PixelStreamingApplicationStyle } from '@epicgames-ps/lib-p
 
 export interface PixelStreamingWrapperProps {
     initialSettings?: Partial<AllSettings>;
+    playerType: string;
 }
 
 const PixelStreamingApplicationStyles =
@@ -28,12 +29,17 @@ export const PixelStreamingWrapperVendor = ({
     
     // A boolean state variable that determines if the Click to play overlay is shown:
     const [clickToPlayVisible, setClickToPlayVisible] = useState(false);
-
+/*     const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('PlayerType', 'Vendor');
+    window.location.search = urlParams.toString(); */
+    window.history.replaceState(null, null, "?PlayerType=Vendor");
     // Run on component mount:
     useEffect(() => {
         if (videoParent.current) {
+
+
             // Attach Pixel Streaming library to videoParent element:
-            const config = new Config({ initialSettings });
+            const config = new Config({ initialSettings, useUrlParams: true});
 
             // Create a Native DOM delegate instance that implements the Delegate interface class
             const stream = new PixelStreaming(config, {

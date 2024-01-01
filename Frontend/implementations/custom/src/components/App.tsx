@@ -23,8 +23,9 @@ export const App = () => {
                     ss: 'ws://localhost:90',
                     StartVideoMuted: true,
                     HoveringMouse: true,
-                    WaitForStreamer: true
+                    WaitForStreamer: true,
                 }}
+                playerType={"User"}
             />
             )}
             {userType === 'Vendor' && (
@@ -37,6 +38,7 @@ export const App = () => {
                     HoveringMouse: true,
                     WaitForStreamer: true
                 }}
+                playerType={"Vendor"}
             />
             )}
         </div>
