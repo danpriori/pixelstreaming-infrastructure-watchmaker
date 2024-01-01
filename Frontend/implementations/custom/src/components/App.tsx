@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { PixelStreamingWrapperUser } from './PixelStreamingWrapperUser';
 import { PixelStreamingWrapperVendor } from './PixelStreamingWrapperVendor';
+import { Button, Flex, Typography } from 'antd';
 
+const boxStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+  };
+const titleStyle: React.CSSProperties = {
+    color: '#bbb',
+    margin: '10px',
+    position: 'absolute',
+};
+const { Title } = Typography;
+  
 export const App = () => {
     
     const [ userType, setUserType] = useState('');
@@ -10,14 +22,20 @@ export const App = () => {
         <div
             style={{
                 height: '100%',
-                width: '100%'
+                width: '100%',
+                backgroundImage: 'linear-gradient(#fff, #aaa)'
             }}
         >
+            
+            
             {userType === '' && (
-                <div>
-                    <button onClick={()=>setUserType('User')}>User</button>
-                    <button onClick={()=>setUserType('Vendor')}>Vendor</button>
-                </div>
+                <>
+                    <Title style={titleStyle}>Watchmaker experience</Title>
+                    <Flex style={boxStyle} justify={'space-evenly'} align={'center'} gap="small" wrap="wrap">
+                        <Button onClick={() => setUserType('User')}>User</Button>
+                        <Button onClick={() => setUserType('Vendor')}>Vendor</Button>
+                    </Flex>
+                </>
             )}
             {userType === 'User' && (
             <PixelStreamingWrapperUser
