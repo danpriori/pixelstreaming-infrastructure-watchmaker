@@ -204,6 +204,8 @@ const matchmaker = net.createServer((connection) => {
 				lastPingReceived: Date.now(),
 				maxUsers: config.maxUsers,
 				maxVendors: config.maxVendors,
+				currentUsers: 0,
+				currentVendors: 0,
 			};
 			cirrusServer.ready = message.ready === true;
 
@@ -257,6 +259,22 @@ const matchmaker = net.createServer((connection) => {
 			// A client connects to a Cirrus server.
 			cirrusServer = cirrusServers.get(connection);
 			if(cirrusServer) {
+				if (message.playerType === 'User') {
+					if (cirrusServer.currentUsers < cirrusServer.maxUsers) {
+						cirrusServer.currentUsers++;
+					} else {
+						console.log(`Max Users reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
+						disconnect(connection);
+					}
+				}
+				if (message.playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendors) {
+					if (cirrusServer.currentVendors < cirrusServer.maxVendors) {
+						cirrusServer.currentVendors++;
+					} else {
+						console.log(`Max Vendors reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
+						disconnect(connection);
+					}
+				}
 				cirrusServer.numConnectedClients++;
 				console.log(`Client connected to Cirrus server ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
 			} else {

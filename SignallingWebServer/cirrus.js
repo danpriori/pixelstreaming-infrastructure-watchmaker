@@ -972,8 +972,9 @@ playerServer.on('connection', function (ws, req) {
 	const urlParams = new URLSearchParams(parsedUrl.search);
 	const whoSendsOffer = urlParams.has('OfferToReceive') && urlParams.get('OfferToReceive') !== 'false' ? WhoSendsOffer.Browser : WhoSendsOffer.Streamer;
 
-	const playerType = urlParams.has('PlayerType') && urlParams.get('PlayerType') !== '' ? urlParams.get('PlayerType') : 'User';
+	const playerTypeForSS = urlParams.has('PlayerType') && urlParams.get('PlayerType') !== '' ? urlParams.get('PlayerType') : 'User';
 
+	console.log(' CONNECTION ', parsedUrl, playerTypeForSS);
 	if (playerCount + 1 > maxPlayerCount && maxPlayerCount !== -1)
 	{
 		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCount}, Current ${playerCount}`);
@@ -1031,7 +1032,7 @@ playerServer.on('connection', function (ws, req) {
 	});
 
 	sendPlayerConnectedToFrontend();
-	sendPlayerConnectedToMatchmaker(playerType);
+	sendPlayerConnectedToMatchmaker(playerTypeForSS);
 
 	const configStr = JSON.stringify(clientConfig);
 	logOutgoing(player.id, configStr)
