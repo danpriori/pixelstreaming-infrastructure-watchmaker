@@ -2,6 +2,9 @@
 var enableRedirectionLinks = false;
 var enableRESTAPI = true;
 
+// some flows are needed only in dev mode (CORS, for instance)
+const DEVELOPMENT_ENV = true;
+
 const defaultConfig = {
 	// The port clients connect to the matchmaking service over HTTP
 	HttpPort: 80,
@@ -28,6 +31,7 @@ var cors = require('cors');
 const app = express();
 const http = require('http').Server(app);
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 const logging = require('./modules/logging.js');
 logging.RegisterConsoleLogger();
@@ -38,7 +42,7 @@ if (config.LogToFile) {
 
 // A list of all the Cirrus server which are connected to the Matchmaker.
 var cirrusServers = new Map();
-
+var urlMap = new Map();
 //
 // Parse command line.
 //
@@ -100,6 +104,56 @@ if(config.EnableWebserver) {
 	}
 }
 
+if (DEVELOPMENT_ENV) {
+	const corsOptions = {
+		origin: 'https://localhost',
+	}
+	app.all('*', function (req, res, next) {
+		res.header('Access-Control-Allow-Origin', '*');
+		res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+		res.header('Access-Control-Allow-Headers', 'Content-Type');
+		next();
+	});
+	app.get('/serverAvailable', cors(corsOptions), retrieveSignallingServerAvailable);
+
+} else {
+	app.get('/serverAvailable', retrieveSignallingServerAvailable);
+}
+
+function retrieveSignallingServerAvailable(req, res) {
+	let signallingServerAddress = null;
+	let serverID = req.params.serverID;
+	let cirrusServer;
+	
+	console.log('retrieve Signalling Server Available. serverID requested? ', serverID, urlMap.has(serverID));
+	if (serverID != undefined && urlMap.has(serverID)) {
+		cirrusServer = cirrusServers.get(serverID);
+		signallingServerAddress = `${cirrusServer.address}:${cirrusServer.port}`;
+		if (res) {
+			res.json({ url: signallingServerAddress });
+		}
+		console.log(`Redirect to ${cirrusServer.address}:${cirrusServer.port}`);
+	} else {
+		cirrusServer = getAvailableCirrusServer();
+		console.log('retrieve Signalling Server Available getting available ', cirrusServer);
+		if (cirrusServer != undefined) {
+			signallingServerAddress = `${cirrusServer.address}:${cirrusServer.port}`;
+			console.log(`Redirect to ${cirrusServer.address}:${cirrusServer.port}`);
+			if (res) {
+				res.json({ url: 'ws://' + signallingServerAddress });
+			}
+		} else {
+			sendBusyResponse(res);
+		}
+
+	}
+}
+
+function sendBusyResponse(res) {
+	console.log('send Busy Response');
+	res.json({ msgType: 'serverFull' });
+}
+
 // No servers are available so send some simple JavaScript to the client to make
 // it retry after a short period of time.
 function sendRetryResponse(res) {
@@ -112,9 +166,17 @@ function sendRetryResponse(res) {
 }
 
 // Get a Cirrus server if there is one available which has no clients connected.
-function getAvailableCirrusServer() {
+function getAvailableCirrusServer(playerType) {
 	for (cirrusServer of cirrusServers.values()) {
-		if (cirrusServer.numConnectedClients === 0 && cirrusServer.ready === true) {
+		if ((cirrusServer.numConnectedClients === 0 
+			&& cirrusServer.ready === true 
+			&& playerType == null) || (cirrusServer.numConnectedClients === 0 
+				&& cirrusServer.ready === true 
+				&& playerType !== null && (
+				(playerType === 'User' && cirrusServer.currentUsers < cirrusServer.maxUsers) 
+				|| (playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendors)
+			))
+		) {
 
 			// Check if we had at least 10 seconds since the last redirect, avoiding the 
 			// chance of redirecting 2+ users to the same SS before they click Play.
@@ -183,6 +245,10 @@ function disconnect(connection) {
 	connection.end();
 }
 
+function getCirrusKeyFromConnection(connectionData) {
+	return connectionData.remoteAddress;
+}
+
 const matchmaker = net.createServer((connection) => {
 	connection.on('data', (data) => {
 		try {
@@ -197,6 +263,12 @@ const matchmaker = net.createServer((connection) => {
 		}
 		if (message.type === 'connect') {
 			// A Cirrus server connects to this Matchmaker server.
+
+			do {
+				id = crypto.randomBytes(3).toString('hex');
+			} while (urlMap.has(id));
+
+
 			cirrusServer = {
 				address: message.address,
 				port: message.port,
@@ -208,6 +280,11 @@ const matchmaker = net.createServer((connection) => {
 				currentVendors: 0,
 			};
 			cirrusServer.ready = message.ready === true;
+
+			cirrusKey = getCirrusKeyFromConnection(connection);
+			cirrusServers.set(cirrusKey, cirrusServer);
+
+			urlMap.set(connection, cirrusServer);
 
 			// Handles disconnects between MM and SS to not add dupes with numConnectedClients = 0 and redirect users to same SS
 			// Check if player is connected and doing a reconnect. message.playerConnected is a new variable sent from the SS to
@@ -302,6 +379,8 @@ const matchmaker = net.createServer((connection) => {
 			}
 		} else {
 			console.log('ERROR: Unknown data: ' + JSON.stringify(message));
+			cirrusKey = getCirrusKeyFromConnection(connection);
+			urlMap.delete(cirrusServer.get(cirrusKey).id);
 			disconnect(connection);
 		}
 	});

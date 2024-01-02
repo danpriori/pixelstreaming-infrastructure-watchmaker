@@ -37,6 +37,7 @@ export const App = () => {
                     </Flex>
                 </>
             )}
+            
             {userType === 'User' && (
             <PixelStreamingWrapperUser
                 initialSettings={{
