@@ -11,6 +11,7 @@ const path = require('path');
 const querystring = require('querystring');
 const bodyParser = require('body-parser');
 const logging = require('./modules/logging.js');
+const url = require('url');
 logging.RegisterConsoleLogger();
 
 // Command line argument --configFile needs to be checked before loading the config, all other command line arguments are dealt with through the config object
@@ -34,7 +35,7 @@ const defaultConfig = {
 	HttpsPort: 443,
 	StreamerPort: 8888,
 	SFUPort: 8889,
-	MaxPlayerCount: -1,
+	MaxPlayerCountVIP: -1,
 	DisableSSLCert: true
 };
 
@@ -102,7 +103,8 @@ var matchmakerAddress = '127.0.0.1';
 var matchmakerPort = 9999;
 var matchmakerRetryInterval = 5;
 var matchmakerKeepAliveInterval = 30;
-var maxPlayerCount = -1;
+var maxPlayerCountVIP = 2;
+var maxPlayerCountBASIC = 1;
 var maxStreamers = 1;
 
 var gameSessionId;
@@ -160,10 +162,12 @@ try {
 		matchmakerRetryInterval = config.MatchmakerRetryInterval;
 	}
 
-	if (typeof config.MaxPlayerCount != 'undefined') {
-		maxPlayerCount = config.MaxPlayerCount;
+	if (typeof config.MaxPlayerCountVIP != 'undefined') {
+		maxPlayerCountVIP = config.MaxPlayerCountVIP;
 	}
-
+	if (typeof config.MaxPlayerCountBASIC != 'undefined') {
+		maxPlayerCountBASIC = config.MaxPlayerCountBASIC;
+	}
 	if (typeof config.MaxStreamers != 'undefined') {
 		maxStreamers = config.MaxStreamers;
 	}
@@ -897,10 +901,10 @@ sfuServer.on('connection', function (ws, req) {
 	requestStreamerId(playerComponent.getSFUStreamerComponent());
 });
 
-let playerCount = 0;
+let playerCountVIP = 0;
 
 function sendPlayersCount() {
-	const msg = { type: 'playerCount', count: players.size };
+	const msg = { type: 'playerCountVIP', count: players.size };
 	logOutgoing("[players]", msg);
 	for (let player of players.values()) {
 		player.sendTo(msg);
@@ -942,13 +946,13 @@ function onPlayerDisconnected(playerId) {
 	const player = players.get(playerId);
 	player.unsubscribe();
 	players.delete(playerId);
-	--playerCount;
+	--playerCountVIP;
 	sendPlayersCount();
 	sendPlayerDisconnectedToFrontend();
 	sendPlayerDisconnectedToMatchmaker();
 
 	//Only flush the process when all players are disconnected from the streamer.
-	if (playerCount == 0) {
+	if (playerCountVIP == 0) {
 		restartStreamer();
 	}
 }
@@ -967,7 +971,7 @@ playerMessageHandlers.set('peerDataChannelsReady', forwardPlayerMessage);
 console.logColor(logging.Green, `WebSocket listening for Players connections on :${httpPort}`);
 let playerServer = new WebSocket.Server({ server: config.UseHTTPS ? https : http});
 playerServer.on('connection', function (ws, req) {
-	var url = require('url');
+	
 	const parsedUrl = url.parse(req.url);
 	const urlParams = new URLSearchParams(parsedUrl.search);
 	const whoSendsOffer = urlParams.has('OfferToReceive') && urlParams.get('OfferToReceive') !== 'false' ? WhoSendsOffer.Browser : WhoSendsOffer.Streamer;
@@ -975,14 +979,14 @@ playerServer.on('connection', function (ws, req) {
 	const playerTypeForSS = urlParams.has('PlayerType') && urlParams.get('PlayerType') !== '' ? urlParams.get('PlayerType') : 'User';
 
 	console.log(' CONNECTION ', parsedUrl, playerTypeForSS);
-	if (playerCount + 1 > maxPlayerCount && maxPlayerCount !== -1)
+	if (playerCountVIP + 1 > maxPlayerCountVIP && maxPlayerCountVIP !== -1)
 	{
-		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCount}, Current ${playerCount}`);
-		ws.close(1013, `too many connections. max: ${maxPlayerCount}, current: ${playerCount}`);
+		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCountVIP}, Current ${playerCount}`);
+		ws.close(1013, `too many connections. max: ${maxPlayerCountVIP}, current: ${playerCount}`);
 		return;
 	}
 
-	++playerCount;
+	++playerCountVIP;
 	let playerId = sanitizePlayerId(nextPlayerId++);
 	console.logColor(logging.Green, `player ${playerId} (${req.connection.remoteAddress}) connected`);
 	let player = new Player(playerId, ws, PlayerType.Regular, whoSendsOffer);
@@ -1307,8 +1311,7 @@ function sendStreamerDisconnectedToMatchmaker() {
 	}
 }
 
-// The Matchmaker will not re-direct clients to this Cirrus server if any client
-// is connected.
+// Let the matchmaker know that has a player connected
 function sendPlayerConnectedToMatchmaker(playerType) {
 	if (!config.UseMatchmaker)
 		return;
@@ -1330,7 +1333,8 @@ function sendPlayerDisconnectedToMatchmaker() {
 		return;
 	try {
 		message = {
-			type: 'clientDisconnected'
+			type: 'clientDisconnected',
+			playerType: playerType
 		};
 		matchmaker.write(JSON.stringify(message));
 	} catch (err) {

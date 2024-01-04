@@ -6,16 +6,14 @@ var enableRESTAPI = true;
 const DEVELOPMENT_ENV = true;
 
 const defaultConfig = {
-	// The port clients connect to the matchmaking service over HTTP
 	HttpPort: 80,
 	UseHTTPS: false,
-	// The matchmaking port the signaling service connects to the matchmaker
 	MatchmakerPort: 9999,
-
-	// Log to file
 	LogToFile: true,
-	
 	EnableWebserver: true,
+	MaxUsersPerSSVIP: 1,
+	MaxVendorsPerSSVIP: 1,
+	MaxUsersPerSSBASIC: 1
 };
 
 // Similar to the Signaling Server (SS) code, load in a config.json file for the MM parameters
@@ -34,6 +32,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 const logging = require('./modules/logging.js');
+
 logging.RegisterConsoleLogger();
 
 if (config.LogToFile) {
@@ -126,6 +125,9 @@ function retrieveSignallingServerAvailable(req, res) {
 	let cirrusServer;
 	
 	console.log('retrieve Signalling Server Available. serverID requested? ', serverID, urlMap.has(serverID));
+
+	const playerType = req.query.PlayerType;
+
 	if (serverID != undefined && urlMap.has(serverID)) {
 		cirrusServer = cirrusServers.get(serverID);
 		signallingServerAddress = `${cirrusServer.address}:${cirrusServer.port}`;
@@ -134,7 +136,7 @@ function retrieveSignallingServerAvailable(req, res) {
 		}
 		console.log(`Redirect to ${cirrusServer.address}:${cirrusServer.port}`);
 	} else {
-		cirrusServer = getAvailableCirrusServer();
+		cirrusServer = getAvailableCirrusServer(playerType);
 		console.log('retrieve Signalling Server Available getting available ', cirrusServer);
 		if (cirrusServer != undefined) {
 			signallingServerAddress = `${cirrusServer.address}:${cirrusServer.port}`;
@@ -168,15 +170,9 @@ function sendRetryResponse(res) {
 // Get a Cirrus server if there is one available which has no clients connected.
 function getAvailableCirrusServer(playerType) {
 	for (cirrusServer of cirrusServers.values()) {
-		if ((cirrusServer.numConnectedClients === 0 
-			&& cirrusServer.ready === true 
-			&& playerType == null) || (cirrusServer.numConnectedClients === 0 
-				&& cirrusServer.ready === true 
-				&& playerType !== null && (
-				(playerType === 'User' && cirrusServer.currentUsers < cirrusServer.maxUsers) 
-				|| (playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendors)
-			))
-		) {
+		console.log(' cirrus server info ', cirrusServer, playerType);
+
+		if ((playerType === 'User' && cirrusServer.currentUsers < cirrusServer.maxUsersVIP) || (playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendorsVIP)) {
 
 			// Check if we had at least 10 seconds since the last redirect, avoiding the 
 			// chance of redirecting 2+ users to the same SS before they click Play.
@@ -274,8 +270,8 @@ const matchmaker = net.createServer((connection) => {
 				port: message.port,
 				numConnectedClients: 0,
 				lastPingReceived: Date.now(),
-				maxUsers: config.maxUsers,
-				maxVendors: config.maxVendors,
+				maxUsersVIP: config.MaxUsersPerSSVIP,
+				maxVendorsVIP: config.MaxVendorsPerSSVIP,
 				currentUsers: 0,
 				currentVendors: 0,
 			};
@@ -337,15 +333,15 @@ const matchmaker = net.createServer((connection) => {
 			cirrusServer = cirrusServers.get(connection);
 			if(cirrusServer) {
 				if (message.playerType === 'User') {
-					if (cirrusServer.currentUsers < cirrusServer.maxUsers) {
+					if (cirrusServer.currentUsers < cirrusServer.maxUsersVIP) {
 						cirrusServer.currentUsers++;
 					} else {
 						console.log(`Max Users reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
 						disconnect(connection);
 					}
 				}
-				if (message.playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendors) {
-					if (cirrusServer.currentVendors < cirrusServer.maxVendors) {
+				if (message.playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendorsVIP) {
+					if (cirrusServer.currentVendors < cirrusServer.maxVendorsVIP) {
 						cirrusServer.currentVendors++;
 					} else {
 						console.log(`Max Vendors reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
