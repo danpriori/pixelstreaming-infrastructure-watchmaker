@@ -10,10 +10,10 @@ export interface PixelStreamingWrapperProps {
     initialSettings?: Partial<AllSettings>;
 }
 
-const requestServerAvailable = async (playerType: string): Promise<any> => {
+const requestServerAvailable = async (playerUserType: string): Promise<any> => {
     try {
       const response = await fetch(
-        `http://${window.location.hostname}/serverAvailable?PlayerType=${playerType}`,
+        `http://${window.location.hostname}/serverAvailable?PlayerUserType=${playerUserType}`,
         {
           method: 'GET',
           headers: {
@@ -42,7 +42,7 @@ export const PixelStreamingWrapperVendor = ({
 
     const playerUI = useRef<HTMLDivElement>(null);
 
-    const playerType: string = 'Vendor';
+    const playerUserType: string = 'Vendor';
 
     // Pixel streaming library instance is stored into this state variable after initialization:
     const [pixelStreaming, setPixelStreaming] = useState<PixelStreaming>();
@@ -54,7 +54,7 @@ export const PixelStreamingWrapperVendor = ({
 
     // Run on component mount:
     useEffect(() => {
-        requestServerAvailable(playerType).then((response) => {
+        requestServerAvailable(playerUserType).then((response) => {
         
             if (response) {
                 if (response.msgType === 'serverFull') {
@@ -64,7 +64,7 @@ export const PixelStreamingWrapperVendor = ({
                 /* connect(response.url);
                 updateKickButton(0); */
 
-                setSignallingServerURL(response.url + '?PlayerType=Vendor');
+                setSignallingServerURL(response.url + '?PlayerUserType=Vendor');
 
                 }
             } else {

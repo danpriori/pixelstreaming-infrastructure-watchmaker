@@ -126,7 +126,7 @@ function retrieveSignallingServerAvailable(req, res) {
 	
 	console.log('retrieve Signalling Server Available. serverID requested? ', serverID, urlMap.has(serverID));
 
-	const playerType = req.query.PlayerType;
+	const playerUserType = req.query.PlayerUserType;
 
 	if (serverID != undefined && urlMap.has(serverID)) {
 		cirrusServer = cirrusServers.get(serverID);
@@ -136,7 +136,7 @@ function retrieveSignallingServerAvailable(req, res) {
 		}
 		console.log(`Redirect to ${cirrusServer.address}:${cirrusServer.port}`);
 	} else {
-		cirrusServer = getAvailableCirrusServer(playerType);
+		cirrusServer = getAvailableCirrusServer(playerUserType);
 		console.log('retrieve Signalling Server Available getting available ', cirrusServer);
 		if (cirrusServer != undefined) {
 			signallingServerAddress = `${cirrusServer.address}:${cirrusServer.port}`;
@@ -168,11 +168,11 @@ function sendRetryResponse(res) {
 }
 
 // Get a Cirrus server if there is one available which has no clients connected.
-function getAvailableCirrusServer(playerType) {
+function getAvailableCirrusServer(playerUserType) {
 	for (cirrusServer of cirrusServers.values()) {
-		console.log(' cirrus server info ', cirrusServer, playerType);
+		console.log(' cirrus server info ', cirrusServer, playerUserType);
 
-		if ((playerType === 'User' && cirrusServer.currentUsers < cirrusServer.maxUsersVIP) || (playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendorsVIP)) {
+		if ((playerUserType === 'User' && cirrusServer.currentUsers < cirrusServer.maxUsersVIP) || (playerUserType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendorsVIP)) {
 
 			// Check if we had at least 10 seconds since the last redirect, avoiding the 
 			// chance of redirecting 2+ users to the same SS before they click Play.
@@ -332,24 +332,24 @@ const matchmaker = net.createServer((connection) => {
 			// A client connects to a Cirrus server.
 			cirrusServer = cirrusServers.get(connection);
 			if(cirrusServer) {
-				if (message.playerType === 'User') {
+				if (message.playerUserType === 'User') {
 					if (cirrusServer.currentUsers < cirrusServer.maxUsersVIP) {
 						cirrusServer.currentUsers++;
 					} else {
-						console.log(`Max Users reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
+						console.log(`Max Users reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerUserType}`);
 						disconnect(connection);
 					}
 				}
-				if (message.playerType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendorsVIP) {
+				if (message.playerUserType === 'Vendor' && cirrusServer.currentVendors < cirrusServer.maxVendorsVIP) {
 					if (cirrusServer.currentVendors < cirrusServer.maxVendorsVIP) {
 						cirrusServer.currentVendors++;
 					} else {
-						console.log(`Max Vendors reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
+						console.log(`Max Vendors reached for this Cirrus Server. Disconneting ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerUserType}`);
 						disconnect(connection);
 					}
 				}
 				cirrusServer.numConnectedClients++;
-				console.log(`Client connected to Cirrus server ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerType}`);
+				console.log(`Client connected to Cirrus server ${cirrusServer.address}:${cirrusServer.port}. Player type: ${message.playerUserType}`);
 			} else {
 				disconnect(connection);
 			}
@@ -358,6 +358,12 @@ const matchmaker = net.createServer((connection) => {
 			cirrusServer = cirrusServers.get(connection);
 			if(cirrusServer) {
 				cirrusServer.numConnectedClients--;
+				if (message.playerUserType === 'User') {
+					cirrusServer.currentUsers--;
+				}
+				if (message.playerUserType === 'Vendor') {
+					cirrusServer.currentVendors--;
+				}
 				console.log(`Client disconnected from Cirrus server ${cirrusServer.address}:${cirrusServer.port}`);
 				if(cirrusServer.numConnectedClients === 0) {
 					// this make this server immediately available for a new client

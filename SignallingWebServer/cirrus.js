@@ -366,11 +366,12 @@ const PlayerType = { Regular: 0, SFU: 1 };
 const WhoSendsOffer = { Streamer: 0, Browser: 1 };
 
 class Player {
-	constructor(id, ws, type, whoSendsOffer) {
+	constructor(id, ws, type, whoSendsOffer, playerUserType) {
 		this.id = id;
 		this.ws = ws;
 		this.type = type;
 		this.whoSendsOffer = whoSendsOffer;
+		this.playerUserType = playerUserType;
 	}
 
 	isSFU() {
@@ -949,7 +950,7 @@ function onPlayerDisconnected(playerId) {
 	--playerCountVIP;
 	sendPlayersCount();
 	sendPlayerDisconnectedToFrontend();
-	sendPlayerDisconnectedToMatchmaker();
+	sendPlayerDisconnectedToMatchmaker(player.playerUserType);
 
 	//Only flush the process when all players are disconnected from the streamer.
 	if (playerCountVIP == 0) {
@@ -976,9 +977,9 @@ playerServer.on('connection', function (ws, req) {
 	const urlParams = new URLSearchParams(parsedUrl.search);
 	const whoSendsOffer = urlParams.has('OfferToReceive') && urlParams.get('OfferToReceive') !== 'false' ? WhoSendsOffer.Browser : WhoSendsOffer.Streamer;
 
-	const playerTypeForSS = urlParams.has('PlayerType') && urlParams.get('PlayerType') !== '' ? urlParams.get('PlayerType') : 'User';
+	const playerUserType = urlParams.has('PlayerUserType') && urlParams.get('PlayerUserType') !== '' ? urlParams.get('PlayerUserType') : 'User';
 
-	console.log(' CONNECTION ', parsedUrl, playerTypeForSS);
+	console.log(' CONNECTION ', parsedUrl, playerUserType);
 	if (playerCountVIP + 1 > maxPlayerCountVIP && maxPlayerCountVIP !== -1)
 	{
 		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCountVIP}, Current ${playerCount}`);
@@ -989,7 +990,7 @@ playerServer.on('connection', function (ws, req) {
 	++playerCountVIP;
 	let playerId = sanitizePlayerId(nextPlayerId++);
 	console.logColor(logging.Green, `player ${playerId} (${req.connection.remoteAddress}) connected`);
-	let player = new Player(playerId, ws, PlayerType.Regular, whoSendsOffer);
+	let player = new Player(playerId, ws, PlayerType.Regular, whoSendsOffer, playerUserType);
 	players.set(playerId, player);
 
 	ws.on('message', (msgRaw) =>{
@@ -1036,7 +1037,7 @@ playerServer.on('connection', function (ws, req) {
 	});
 
 	sendPlayerConnectedToFrontend();
-	sendPlayerConnectedToMatchmaker(playerTypeForSS);
+	sendPlayerConnectedToMatchmaker(playerUserType);
 
 	const configStr = JSON.stringify(clientConfig);
 	logOutgoing(player.id, configStr)
@@ -1312,13 +1313,13 @@ function sendStreamerDisconnectedToMatchmaker() {
 }
 
 // Let the matchmaker know that has a player connected
-function sendPlayerConnectedToMatchmaker(playerType) {
+function sendPlayerConnectedToMatchmaker(playerUserType) {
 	if (!config.UseMatchmaker)
 		return;
 	try {
 		message = {
 			type: 'clientConnected',
-			playerType: playerType
+			playerUserType: playerUserType
 		};
 		matchmaker.write(JSON.stringify(message));
 	} catch (err) {
@@ -1328,13 +1329,13 @@ function sendPlayerConnectedToMatchmaker(playerType) {
 
 // The Matchmaker is interested when nobody is connected to a Cirrus server
 // because then it can re-direct clients to this re-cycled Cirrus server.
-function sendPlayerDisconnectedToMatchmaker() {
+function sendPlayerDisconnectedToMatchmaker(playerUserType) {
 	if (!config.UseMatchmaker)
 		return;
 	try {
 		message = {
 			type: 'clientDisconnected',
-			playerType: playerType
+			playerUserType: playerUserType
 		};
 		matchmaker.write(JSON.stringify(message));
 	} catch (err) {
