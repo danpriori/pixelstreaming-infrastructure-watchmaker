@@ -27,8 +27,6 @@ export const App = () => {
                 backgroundImage: 'linear-gradient(#fff, #aaa)'
             }}
         >
-            
-            
             {experienceType === '' && (
                 <>
                     <Title style={titleStyle}>Watchmaker - select your experience type</Title>

@@ -1397,7 +1397,7 @@ async function restartStreamer() {
 function resetProcess() {
 
 	const appExecutableLocation = config.CirrusServerExperienceType === 'Vip' ? config.VipAppLocation : config.BasicAppLocation;
-	const appShippingProcessLocation = config.CirrusServerExperienceType === 'Vip' ? config.ShippingProcess : config.ShippingProcess;
+	const appShippingProcessLocation = config.CirrusServerExperienceType === 'Vip' ? config.VipShippingProcess : config.BasicShippingProcess;
     let EngineSplit = appExecutableLocation.split("\\");
 
     // kill process

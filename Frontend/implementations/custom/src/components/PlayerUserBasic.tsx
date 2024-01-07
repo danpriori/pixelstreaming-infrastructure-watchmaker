@@ -47,8 +47,8 @@ export const PlayerUserBasic = ({
 
     // Pixel streaming library instance is stored into this state variable after initialization:
     const [pixelStreaming, setPixelStreaming] = useState<PixelStreaming>();
-    const [application, setApplication] = useState<Application>();
-    const [signallingServerURL, setSignallingServerURL] = useState<string>('');
+    const [application, setApplication] = useState<Application>(null);
+    const [signallingServerURL, setSignallingServerURL] = useState<string>(null);
     
     // A boolean state variable that determines if the Click to play overlay is shown:
     const [clickToPlayVisible, setClickToPlayVisible] = useState(false);
@@ -78,7 +78,7 @@ export const PlayerUserBasic = ({
     }, []);
 
     useEffect(() => {
-        if (videoParent.current && playerUI.current && signallingServerURL !== null && initialSettings) {
+        if (videoParent.current && signallingServerURL !== null) {
             
             initialSettings.ss = signallingServerURL;
 
@@ -101,19 +101,19 @@ export const PlayerUserBasic = ({
             setPixelStreaming(stream);
 
             
-            const application = new Application({
+            const applicationUI = new Application({
                 stream,
                 onColorModeChanged: (isLightMode) => PixelStreamingApplicationStyles.setColorMode(isLightMode)
             });
 
             console.log(' config ', config, stream, stream.config.getOptionSettings());
 
-            application.uiFeaturesElement.style.position = 'absolute';
-            application.uiFeaturesElement.style.top = '0px';
+            applicationUI.uiFeaturesElement.style.position = 'absolute';
+            applicationUI.uiFeaturesElement.style.top = '0px';
 
-            playerUI.current.appendChild(application.rootElement);
+            playerUI.current.appendChild(applicationUI.rootElement);
 
-            setApplication(application);
+            setApplication(applicationUI);
 
             // Clean up on component unmount:
             return () => {
@@ -122,7 +122,7 @@ export const PlayerUserBasic = ({
                 } catch {}
             };
         }
-    }, [signallingServerURL, playerUI]);
+    }, [signallingServerURL]);
     
 
     return (
