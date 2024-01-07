@@ -35,8 +35,12 @@ const defaultConfig = {
 	HttpsPort: 443,
 	StreamerPort: 8888,
 	SFUPort: 8889,
-	MaxPlayerCountVIP: -1,
-	DisableSSLCert: true
+	MaxPlayerCountVIP: 2,
+	MaxPlayerCountBASIC: 1,
+	DisableSSLCert: true,
+	CirrusServerExperienceType: "Vip",
+	VipAppLocation: "C:\\soft\\freelances\\watchmaker\\pixelstreaming\\application\\WatchmakerFakeApp.exe",
+	BasicAppLocation: "C:\\soft\\freelances\\watchmaker\\pixelstreaming\\application\\WatchmakerFakeApp.exe",
 };
 
 const argv = require('yargs').argv;
@@ -902,10 +906,10 @@ sfuServer.on('connection', function (ws, req) {
 	requestStreamerId(playerComponent.getSFUStreamerComponent());
 });
 
-let playerCountVIP = 0;
+let playerCount = 0;
 
 function sendPlayersCount() {
-	const msg = { type: 'playerCountVIP', count: players.size };
+	const msg = { type: 'playerCount', count: players.size };
 	logOutgoing("[players]", msg);
 	for (let player of players.values()) {
 		player.sendTo(msg);
@@ -947,13 +951,13 @@ function onPlayerDisconnected(playerId) {
 	const player = players.get(playerId);
 	player.unsubscribe();
 	players.delete(playerId);
-	--playerCountVIP;
+	--playerCount;
 	sendPlayersCount();
 	sendPlayerDisconnectedToFrontend();
 	sendPlayerDisconnectedToMatchmaker(player.playerUserType);
 
 	//Only flush the process when all players are disconnected from the streamer.
-	if (playerCountVIP == 0) {
+	if (playerCount === 0) {
 		restartStreamer();
 	}
 }
@@ -977,17 +981,20 @@ playerServer.on('connection', function (ws, req) {
 	const urlParams = new URLSearchParams(parsedUrl.search);
 	const whoSendsOffer = urlParams.has('OfferToReceive') && urlParams.get('OfferToReceive') !== 'false' ? WhoSendsOffer.Browser : WhoSendsOffer.Streamer;
 
-	const playerUserType = urlParams.has('PlayerUserType') && urlParams.get('PlayerUserType') !== '' ? urlParams.get('PlayerUserType') : 'User';
+	const playerUserType = urlParams.has('PlayerUserType') && urlParams.get('PlayerUserType') !== '' ? urlParams.get('PlayerUserType') : 'UserVip';
 
-	console.log(' CONNECTION ', parsedUrl, playerUserType);
-	if (playerCountVIP + 1 > maxPlayerCountVIP && maxPlayerCountVIP !== -1)
+	const maxPlayerCount = config.CirrusServerExperienceType === "Vip" ? maxPlayerCountVIP: maxPlayerCountBASIC;
+	
+	console.log(' CONNECTION ', parsedUrl, playerUserType, maxPlayerCount);
+	
+	if (playerCount + 1 > maxPlayerCount && maxPlayerCount !== -1)
 	{
-		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCountVIP}, Current ${playerCount}`);
-		ws.close(1013, `too many connections. max: ${maxPlayerCountVIP}, current: ${playerCount}`);
+		console.logColor(logging.Red, `new connection would exceed number of allowed concurrent connections. Max: ${maxPlayerCount}, Current ${playerCount}`);
+		ws.close(1013, `too many connections. max: ${maxPlayerCount}, current: ${playerCount}`);
 		return;
 	}
 
-	++playerCountVIP;
+	++playerCount;
 	let playerId = sanitizePlayerId(nextPlayerId++);
 	console.logColor(logging.Green, `player ${playerId} (${req.connection.remoteAddress}) connected`);
 	let player = new Player(playerId, ws, PlayerType.Regular, whoSendsOffer, playerUserType);
@@ -1088,7 +1095,8 @@ if (config.UseMatchmaker) {
 			address: typeof serverPublicIp === 'undefined' ? '127.0.0.1' : serverPublicIp,
 			port: config.UseHTTPS ? httpsPort : httpPort,
 			ready: streamers.size > 0,
-			playerConnected: playerConnected
+			playerConnected: playerConnected,
+			cirrusServerExperienceType: config.CirrusServerExperienceType,
 		};
 
 		matchmaker.write(JSON.stringify(message));
@@ -1353,7 +1361,7 @@ function callbackTasks(error, stdout, stderr) {
 
 function callbackApp(error, stdout, stderr) {
     if (stdout) {
-        let EngineSplit = config.AppLocation.split("\\");
+        let EngineSplit = config.CirrusServerExperienceType === 'Vip' ? config.VipAppLocation.split("\\") : config.BasicAppLocation.split("\\");
         console.log('Task killed: ' + EngineSplit[EngineSplit.length - 1]);
     }
     if (error) {
@@ -1363,11 +1371,12 @@ function callbackApp(error, stdout, stderr) {
 };
 
 function executeApp(delay = 1000) {
-    let EngineSplit = config.AppLocation.split("\\");
+	const appExecutableLocation = config.CirrusServerExperienceType === 'Vip' ? config.VipAppLocation : config.BasicAppLocation;
+    let EngineSplit = appExecutableLocation.split("\\");
     // TODO improve the exec response checker instead using timeouts for executing tasks that failed
     setTimeout(() => {
         console.log('Task restarting: ' + EngineSplit[EngineSplit.length - 1]);
-        exec(`${config.AppLocation} -PixelStreamingIP=127.0.0.1 -PixelStreamingPort=${config.StreamerPort} ${config.AppArgs}`, callbackTasks);
+        exec(`${appExecutableLocation} -PixelStreamingIP=127.0.0.1 -PixelStreamingPort=${config.StreamerPort} ${config.AppArgs}`, callbackTasks);
     }, delay);
 }
 
@@ -1387,9 +1396,12 @@ async function restartStreamer() {
 
 function resetProcess() {
 
+	const appExecutableLocation = config.CirrusServerExperienceType === 'Vip' ? config.VipAppLocation : config.BasicAppLocation;
+	const appShippingProcessLocation = config.CirrusServerExperienceType === 'Vip' ? config.ShippingProcess : config.ShippingProcess;
+    let EngineSplit = appExecutableLocation.split("\\");
+
     // kill process
-    exec('taskkill /IM \"' + config.ShippingProcess + '\" /T /F ', callbackTasks);
-    let EngineSplit = config.AppLocation.split("\\");
+    exec('taskkill /IM \"' + appShippingProcessLocation + '\" /T /F ', callbackTasks);
     exec('taskkill /IM \"' + EngineSplit[EngineSplit.length - 1] + '\" /T /F ', callbackApp);
 
 	streamersCount = 0; // improve to support multiple streamers to allow many sessions per Cirrus/SS server

@@ -5,6 +5,7 @@ import {
     PixelStreaming
 } from '@epicgames-ps/lib-pixelstreamingfrontend-ue5.3';
 import { Application, PixelStreamingApplicationStyle } from '@epicgames-ps/lib-pixelstreamingfrontend-ui-ue5.3';
+import { PlayerUserType } from '../types';
 
 export interface PixelStreamingWrapperProps {
     initialSettings?: Partial<AllSettings>;
@@ -33,7 +34,7 @@ const PixelStreamingApplicationStyles =
     new PixelStreamingApplicationStyle();
 PixelStreamingApplicationStyles.applyStyleSheet();
 
-export const PixelStreamingWrapperUser = ({
+export const PlayerUserBasic = ({
     initialSettings
 }: PixelStreamingWrapperProps) => {
 
@@ -42,12 +43,12 @@ export const PixelStreamingWrapperUser = ({
 
     const playerUI = useRef<HTMLDivElement>(null);
 
-    const playerUserType: string = 'User';
+    const playerUserType: string = PlayerUserType.USER_BASIC;
 
     // Pixel streaming library instance is stored into this state variable after initialization:
     const [pixelStreaming, setPixelStreaming] = useState<PixelStreaming>();
     const [application, setApplication] = useState<Application>();
-    const [signallingServerURL, setSignallingServerURL] = useState<string>(null);
+    const [signallingServerURL, setSignallingServerURL] = useState<string>('');
     
     // A boolean state variable that determines if the Click to play overlay is shown:
     const [clickToPlayVisible, setClickToPlayVisible] = useState(false);
@@ -77,7 +78,7 @@ export const PixelStreamingWrapperUser = ({
     }, []);
 
     useEffect(() => {
-        if (videoParent.current && signallingServerURL !== null) {
+        if (videoParent.current && playerUI.current && signallingServerURL !== null && initialSettings) {
             
             initialSettings.ss = signallingServerURL;
 
@@ -121,7 +122,7 @@ export const PixelStreamingWrapperUser = ({
                 } catch {}
             };
         }
-    }, [signallingServerURL]);
+    }, [signallingServerURL, playerUI]);
     
 
     return (

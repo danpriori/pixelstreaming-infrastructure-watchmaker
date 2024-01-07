@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { PixelStreamingWrapperUser } from './PixelStreamingWrapperUser';
-import { PixelStreamingWrapperVendor } from './PixelStreamingWrapperVendor';
+import { PlayerUserBasic } from './PlayerUserBasic';
+import { MainPageVip } from './MainPageVip';
 import { Button, Flex, Typography } from 'antd';
+import { PlayerUserType } from '../types';
 
 const boxStyle: React.CSSProperties = {
     width: '100%',
@@ -16,7 +17,7 @@ const { Title } = Typography;
   
 export const App = () => {
     
-    const [ userType, setUserType] = useState('');
+    const [ experienceType, setExperienceType] = useState('');
     
     return (
         <div
@@ -28,39 +29,30 @@ export const App = () => {
         >
             
             
-            {userType === '' && (
+            {experienceType === '' && (
                 <>
-                    <Title style={titleStyle}>Watchmaker experience</Title>
+                    <Title style={titleStyle}>Watchmaker - select your experience type</Title>
                     <Flex style={boxStyle} justify={'space-evenly'} align={'center'} gap="small" wrap="wrap">
-                        <Button onClick={() => setUserType('User')}>User</Button>
-                        <Button onClick={() => setUserType('Vendor')}>Vendor</Button>
+                        <Button onClick={() => setExperienceType('Basic')}>Basic</Button>
+                        <Button onClick={() => setExperienceType('Vip')}>VIP</Button>
                     </Flex>
                 </>
             )}
             
-            {userType === 'User' && (
-            <PixelStreamingWrapperUser
+            {experienceType === 'Basic' && (
+            <PlayerUserBasic 
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
-                    ss: 'ws://localhost:90/?PlayerType=User',
+                    ss: 'ws://localhost:90/?PlayerUserType=' + PlayerUserType.USER_BASIC,
                     StartVideoMuted: true,
                     HoveringMouse: true,
                     WaitForStreamer: true,
-                }}
+                }} 
             />
             )}
-            {userType === 'Vendor' && (
-            <PixelStreamingWrapperVendor
-                initialSettings={{
-                    AutoPlayVideo: true,
-                    AutoConnect: true,
-                    ss: 'ws://localhost:90/?PlayerType=Vendor',
-                    StartVideoMuted: true,
-                    HoveringMouse: true,
-                    WaitForStreamer: true
-                }}
-            />
+            {experienceType === 'Vip' && (
+            <MainPageVip />
             )}
             
         </div>

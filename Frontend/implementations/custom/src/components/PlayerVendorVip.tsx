@@ -5,6 +5,7 @@ import {
     PixelStreaming
 } from '@epicgames-ps/lib-pixelstreamingfrontend-ue5.3';
 import { Application, PixelStreamingApplicationStyle } from '@epicgames-ps/lib-pixelstreamingfrontend-ui-ue5.3';
+import { PlayerUserType } from '../types';
 
 export interface PixelStreamingWrapperProps {
     initialSettings?: Partial<AllSettings>;
@@ -34,7 +35,7 @@ const PixelStreamingApplicationStyles =
     new PixelStreamingApplicationStyle();
 PixelStreamingApplicationStyles.applyStyleSheet();
 
-export const PixelStreamingWrapperVendor = ({
+export const PlayerVendorVip = ({
     initialSettings
 }: PixelStreamingWrapperProps) => {
     // A reference to parent div element that the Pixel Streaming library attaches into:
@@ -42,7 +43,7 @@ export const PixelStreamingWrapperVendor = ({
 
     const playerUI = useRef<HTMLDivElement>(null);
 
-    const playerUserType: string = 'Vendor';
+    const playerUserType: string = PlayerUserType.VENDOR_VIP;
 
     // Pixel streaming library instance is stored into this state variable after initialization:
     const [pixelStreaming, setPixelStreaming] = useState<PixelStreaming>();
@@ -64,7 +65,7 @@ export const PixelStreamingWrapperVendor = ({
                 /* connect(response.url);
                 updateKickButton(0); */
 
-                setSignallingServerURL(response.url + '?PlayerUserType=Vendor');
+                setSignallingServerURL(response.url + '?PlayerUserType=' + playerUserType);
 
                 }
             } else {

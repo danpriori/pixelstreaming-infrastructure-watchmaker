@@ -18,8 +18,11 @@
 	"MaxPlayerCountVIP": 2,
 	"MaxPlayerCountBASIC": 1,
 	"MaxStreamers": 1,
-	"AppLocation": "C:\\Users\\DanielPriori\\Documents\\BuiltPackages\\test3\\Windows\\WatchmakerFakeApp.exe",
+	"CirrusServerExperienceType": "Basic",
+	"VipAppLocation": "C:\\soft\\freelances\\watchmaker\\pixelstreaming\\application\\WatchmakerFakeApp.exe",
+	"BasicAppLocation": "C:\\soft\\freelances\\watchmaker\\pixelstreaming\\application\\WatchmakerFakeApp.exe",
     "AppArgs": "-AudioMixer -renderOffScreen -NvEncH264ConfigLevel=NV_ENC_LEVEL_H264_51",
-    "ShippingProcess": "WatchmakerFakeApp.exe",
+    "VipShippingProcess": "WatchmakerFakeApp.exe",
+	"BasicShippingProcess": "WatchmakerFakeApp.exe",
     "PeerConnectionOptions": "{ \"iceServers\": [{\"urls\": [\"stun:stun1.l.google.com:19302\",\"stun:stun2.l.google.com:19302\", \"stun:stun3.l.google.com:19302\", \"stun:stun4.l.google.com:19302\"]}]}"
 }
