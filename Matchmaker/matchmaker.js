@@ -3,7 +3,7 @@ var enableRedirectionLinks = false;
 var enableRESTAPI = true;
 
 // some flows are needed only in dev mode (CORS, for instance)
-const DEVELOPMENT_ENV = true;
+const DEVELOPMENT_ENV = false;
 
 const defaultConfig = {
 	HttpPort: 80,

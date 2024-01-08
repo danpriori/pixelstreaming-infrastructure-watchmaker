@@ -539,6 +539,8 @@ function requestStreamerId(streamer) {
 
 	// request id
 	const msg = { type: "identify" };
+
+	console.log(' STREAMER ID ', msg, streamer, streamer.id);
 	logOutgoing(streamer.id, msg);
 	streamer.ws.send(JSON.stringify(msg));
 
@@ -550,6 +552,7 @@ function requestStreamerId(streamer) {
 			console.error(error);
 			streamer.ws.close(1008, error);
 		} else {
+			console.log(' REGISTER LEGACY STREAMER ID ', newLegacyId, streamer);
 			registerStreamer(newLegacyId, streamer);
 		}
 
@@ -577,6 +580,7 @@ function sanitizeStreamerId(id) {
 }
 
 function registerStreamer(id, streamer) {
+	console.log(' REGISTER STREAMER ID ', id, streamer);
 	// remove any existing streamer id
 	if (!!streamer.id) {
 		// notify any connected peers of rename
