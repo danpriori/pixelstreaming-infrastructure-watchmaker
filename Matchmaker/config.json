@@ -6,5 +6,7 @@
 	"EnableWebserver": true,
 	"MaxUsersPerSSVIP": 1,
 	"MaxVendorsPerSSVIP": 1,
-	"MaxUsersPerSSBASIC": 1
+	"MaxUsersPerSSBASIC": 1,
+	"HTTPSCertFile": "./certificates/client-cert.pem",
+	"HTTPSKeyFile": "./certificates/client-key.pem"
 }

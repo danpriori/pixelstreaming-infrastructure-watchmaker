@@ -3,7 +3,7 @@ var enableRedirectionLinks = false;
 var enableRESTAPI = true;
 
 // some flows are needed only in dev mode (CORS, for instance)
-const DEVELOPMENT_ENV = false;
+const DEVELOPMENT_ENV = true;
 
 const defaultConfig = {
 	HttpPort: 80,
@@ -142,7 +142,11 @@ function retrieveSignallingServerAvailable(req, res) {
 			signallingServerAddress = `${cirrusServer.address}:${cirrusServer.port}`;
 			console.log(`Redirect to ${cirrusServer.address}:${cirrusServer.port}`);
 			if (res) {
-				res.json({ url: 'ws://' + signallingServerAddress });
+				if (cirrusServer.port === 443) {
+					res.json({ url: 'wss://' + signallingServerAddress });
+				} else {
+					res.json({ url: 'ws://' + signallingServerAddress });
+				}
 			}
 		} else {
 			sendBusyResponse(res);

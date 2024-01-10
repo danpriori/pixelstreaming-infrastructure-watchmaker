@@ -147,8 +147,8 @@ try {
 		FRONTEND_WEBSERVER = config.FrontendUrl;
 	}
 
-	if (typeof config.peerConnectionOptions != 'undefined') {
-		clientConfig.peerConnectionOptions = JSON.parse(config.peerConnectionOptions);
+	if (typeof config.PeerConnectionOptions != 'undefined') {
+		clientConfig.peerConnectionOptions = JSON.parse(config.PeerConnectionOptions);
 		console.log(`peerConnectionOptions = ${JSON.stringify(clientConfig.peerConnectionOptions)}`);
 	} else {
 		console.log("No peerConnectionConfig")
