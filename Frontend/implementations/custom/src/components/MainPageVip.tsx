@@ -44,7 +44,7 @@ export const MainPageVip = () => {
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
-                    ss: 'ws://localhost:90/?PlayerUserType=' + PlayerUserType.USER_VIP,
+                    ss: 'wss://localhost:90/?PlayerUserType=' + PlayerUserType.USER_VIP,
                     StartVideoMuted: true,
                     HoveringMouse: true,
                     WaitForStreamer: true,
@@ -56,7 +56,7 @@ export const MainPageVip = () => {
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
-                    ss: 'ws://localhost:90/?PlayerUserType=' + PlayerUserType.VENDOR_VIP,
+                    ss: 'wss://localhost:90/?PlayerUserType=' + PlayerUserType.VENDOR_VIP,
                     StartVideoMuted: true,
                     HoveringMouse: true,
                     WaitForStreamer: true

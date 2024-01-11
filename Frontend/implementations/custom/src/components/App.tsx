@@ -42,7 +42,7 @@ export const App = () => {
                 initialSettings={{
                     AutoPlayVideo: true,
                     AutoConnect: true,
-                    ss: 'ws://localhost:90/?PlayerUserType=' + PlayerUserType.USER_BASIC,
+                    ss: 'wss://localhost:90/?PlayerUserType=' + PlayerUserType.USER_BASIC,
                     StartVideoMuted: true,
                     HoveringMouse: true,
                     WaitForStreamer: true,

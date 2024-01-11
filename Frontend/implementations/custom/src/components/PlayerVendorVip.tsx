@@ -6,30 +6,11 @@ import {
 } from '@epicgames-ps/lib-pixelstreamingfrontend-ue5.3';
 import { Application, PixelStreamingApplicationStyle } from '@epicgames-ps/lib-pixelstreamingfrontend-ui-ue5.3';
 import { PlayerUserType } from '../types';
+import { requestServerAvailable } from '../utils/playerUtils';
 
 export interface PixelStreamingWrapperProps {
     initialSettings?: Partial<AllSettings>;
 }
-
-const requestServerAvailable = async (playerUserType: string): Promise<any> => {
-    try {
-      const response = await fetch(
-        `http://${window.location.hostname}/serverAvailable?PlayerUserType=${playerUserType}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      return response.json();
-    } catch (e) {
-      return null;
-    }
-    // local test
-    // return { url: 'localhost:999' };
-  };
-
 
 const PixelStreamingApplicationStyles =
     new PixelStreamingApplicationStyle();
