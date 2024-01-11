@@ -174,6 +174,9 @@ function sendRetryResponse(res) {
 // Get a Cirrus server if there is one available which has no clients connected.
 function getAvailableCirrusServer(playerUserType) {
 	for (cirrusServer of cirrusServers.values()) {
+
+		if (!cirrusServer.ready) continue; // only ready cirrus server will be analyzed
+
 		console.log(' cirrus server info ', cirrusServer, playerUserType);
 
 		let isPlayerAllowed = false;
