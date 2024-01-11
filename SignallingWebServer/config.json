@@ -20,11 +20,11 @@
 	"MaxPlayerCountVIP": 2,
 	"MaxPlayerCountBASIC": 1,
 	"MaxStreamers": 1,
-	"CirrusServerExperienceType": "Basic",
-	"VipAppLocation": "C:\\Watchmaker\\application\\WatchmakerFakeApp.exe",
-	"BasicAppLocation": "C:\\Watchmaker\\application\\WatchmakerFakeApp.exe",
-    "AppArgs": "-AudioMixer -renderOffScreen -NvEncH264ConfigLevel=NV_ENC_LEVEL_H264_51",
-    "VipShippingProcess": "WatchmakerFakeApp.exe",
-	"BasicShippingProcess": "WatchmakerFakeApp.exe",
+	"CirrusServerExperienceType": "Vip",
+	"VipAppLocation": "C:\\Watchmaker\\application\\Watch_France.exe",
+	"BasicAppLocation": "C:\\Watchmaker\\application\\Watch_France.exe",
+    "AppArgs": "-AudioMixer -renderOffScreen",
+    "VipShippingProcess": "UnrealGame.exe",
+	"BasicShippingProcess": "UnrealGame.exe",
     "PeerConnectionOptions": "{ \"iceServers\": [{\"urls\": [\"stun:stun1.l.google.com:19302\",\"stun:stun2.l.google.com:19302\", \"stun:stun3.l.google.com:19302\", \"stun:stun4.l.google.com:19302\"]}]}"
 }
