@@ -17,3 +17,8 @@ if(!(New-NetFirewallRule -Name "Allow Local Node ss-mm-streamer-communications i
 if(!(New-NetFirewallRule -Name "Allow Local Node ss-mm-streamer-communications out" -DisplayName "Allow Local Node ss-mm-streamer-communications out" -Action "Allow" -Direction "Outbound" -Protocol "tcp" -LocalPort 9090 -Program "C:\Program Files\nodejs\node.exe" -ErrorAction Ignore)){
     Set-NetFirewallRule -Name "Allow Local Node ss-mm-streamer-communications out" -Action "Allow" -Direction "Outbound" -Protocol "tcp" -LocalPort 9090 -Program "C:\Program Files\nodejs\node.exe"
 }
+
+$MatchmakerFolder = "C:\Watchmaker"
+
+Write-Host "Running matchmaker"
+Start-Process -FilePath "npm" -ArgumentList 'run','start:windows' -WorkingDirectory "$MatchmakerFolder" -Wait -NoNewWindow -ErrorAction Continue
