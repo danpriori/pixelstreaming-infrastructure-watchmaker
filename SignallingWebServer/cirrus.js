@@ -115,6 +115,9 @@ var gameSessionId;
 var userSessionId;
 var serverPublicIp;
 
+var matchmaker;
+
+
 // `clientConfig` is send to Streamer and Players
 // Example of STUN server setting
 // let clientConfig = {peerConnectionOptions: { 'iceServers': [{'urls': ['stun:34.250.222.95:19302']}] }};
@@ -123,7 +126,7 @@ var clientConfig = { type: 'config', peerConnectionOptions: {} };
 // Parse public server address from command line
 // --publicIp <public address>
 try {
-	if (typeof config.PublicIp != 'undefined') {
+	if (typeof config.PublicIp != 'undefined' && config.PublicIp !== '') {
 		serverPublicIp = config.PublicIp.toString();
 	}
 
@@ -1073,81 +1076,127 @@ function disconnectAllPlayers(streamerId) {
 	}
 }
 
+function getExternalIP() {
+	// get external IP address using ipify
+	const httpIPRequest = config.UseHTTPS ? require('https') : require('http');
+
+	// Set the URL of the request to the ipify API
+	const options = {
+	host: 'api.ipify.org',
+	port: 80,
+	path: '/?format=json'
+	};
+
+	// Create a new http.ClientRequest object
+	const req = httpIPRequest.request(options, (res) => {
+		// Set the response encoding to utf8
+		res.setEncoding('utf8');
+
+		// When a chunk of data is received, append it to the body
+		let body = '';
+		res.on('data', (chunk) => {
+			body += chunk;
+		});
+
+		// When the response completes, parse the JSON and log the IP address
+		res.on('end', () => {
+			const data = JSON.parse(body);
+			serverPublicIp = data.ip;
+
+			setupMatchmaker();
+		});
+	});
+
+	// Send the request
+	req.end();
+}
+
+if (serverPublicIp === '') {
+	getExternalIP();
+} else {
+	setupMatchmaker();
+}
+
 /**
  * Function that handles the connection to the matchmaker.
  */
 
-if (config.UseMatchmaker) {
-	var matchmaker = new net.Socket();
-
-	matchmaker.on('connect', function() {
-		console.log(`Cirrus connected to Matchmaker ${matchmakerAddress}:${matchmakerPort}`);
-
-		// message.playerConnected is a new variable sent from the SS to help track whether or not a player 
-		// is already connected when a 'connect' message is sent (i.e., reconnect). This happens when the MM
-		// and the SS get disconnected unexpectedly (was happening often at scale for some reason).
-		var playerConnected = false;
-
-		// Set the playerConnected flag to tell the MM if there is already a player active (i.e., don't send a new one here)
-		if( players && players.size > 0) {
-			playerConnected = true;
-		}
-
-		// Add the new playerConnected flag to the message body to the MM
-		message = {
-			type: 'connect',
-			address: typeof serverPublicIp === 'undefined' ? '127.0.0.1' : serverPublicIp,
-			port: config.UseHTTPS ? httpsPort : httpPort,
-			ready: streamers.size > 0,
-			playerConnected: playerConnected,
-			cirrusServerExperienceType: config.CirrusServerExperienceType,
-		};
-
-		matchmaker.write(JSON.stringify(message));
-	});
-
-	matchmaker.on('error', (err) => {
-		console.log(`Matchmaker connection error ${JSON.stringify(err)}`);
-	});
-
-	matchmaker.on('end', () => {
-		console.log('Matchmaker connection ended');
-	});
-
-	matchmaker.on('close', (hadError) => {
-		console.logColor(logging.Blue, 'Setting Keep Alive to true');
-        matchmaker.setKeepAlive(true, 60000); // Keeps it alive for 60 seconds
-		
-		console.log(`Matchmaker connection closed (hadError=${hadError})`);
-
-		reconnect();
-	});
-
-	// Attempt to connect to the Matchmaker
-	function connect() {
-		matchmaker.connect(matchmakerPort, matchmakerAddress);
-	}
-
-	// Try to reconnect to the Matchmaker after a given period of time
-	function reconnect() {
-		console.log(`Try reconnect to Matchmaker in ${matchmakerRetryInterval} seconds`)
-		setTimeout(function() {
-			connect();
-		}, matchmakerRetryInterval * 1000);
-	}
-
-	function registerMMKeepAlive() {
-		setInterval(function() {
+function setupMatchmaker() {
+	if (config.UseMatchmaker) {
+		matchmaker = new net.Socket();
+	
+		matchmaker.on('connect', function() {
+			console.log(`Cirrus connected to Matchmaker ${matchmakerAddress}:${matchmakerPort}`);
+	
+			// message.playerConnected is a new variable sent from the SS to help track whether or not a player 
+			// is already connected when a 'connect' message is sent (i.e., reconnect). This happens when the MM
+			// and the SS get disconnected unexpectedly (was happening often at scale for some reason).
+			var playerConnected = false;
+	
+			// Set the playerConnected flag to tell the MM if there is already a player active (i.e., don't send a new one here)
+			if( players && players.size > 0) {
+				playerConnected = true;
+			}
+	
+			// Add the new playerConnected flag to the message body to the MM
 			message = {
-				type: 'ping'
+				type: 'connect',
+				address: typeof serverPublicIp === 'undefined' ? '127.0.0.1' : serverPublicIp,
+				port: config.UseHTTPS ? httpsPort : httpPort,
+				ready: streamers.size > 0,
+				playerConnected: playerConnected,
+				cirrusServerExperienceType: config.CirrusServerExperienceType,
 			};
+	
 			matchmaker.write(JSON.stringify(message));
-		}, matchmakerKeepAliveInterval * 1000);
+		});
+	
+		matchmaker.on('error', (err) => {
+			console.log(`Matchmaker connection error ${JSON.stringify(err)}`);
+		});
+	
+		matchmaker.on('end', () => {
+			console.log('Matchmaker connection ended');
+		});
+	
+		matchmaker.on('close', (hadError) => {
+			console.logColor(logging.Blue, 'Setting Keep Alive to true');
+			matchmaker.setKeepAlive(true, 60000); // Keeps it alive for 60 seconds
+			
+			console.log(`Matchmaker connection closed (hadError=${hadError})`);
+	
+			reconnect();
+		});
+	
+		
+		connect();
+		registerMMKeepAlive();
 	}
-
-	connect();
-	registerMMKeepAlive();
 }
+
+// Attempt to connect to the Matchmaker
+function connect() {
+	matchmaker.connect(matchmakerPort, matchmakerAddress);
+}
+
+// Try to reconnect to the Matchmaker after a given period of time
+function reconnect() {
+	console.log(`Try reconnect to Matchmaker in ${matchmakerRetryInterval} seconds`)
+	setTimeout(function() {
+		connect();
+	}, matchmakerRetryInterval * 1000);
+}
+
+function registerMMKeepAlive() {
+	setInterval(function() {
+		message = {
+			type: 'ping'
+		};
+		matchmaker.write(JSON.stringify(message));
+	}, matchmakerKeepAliveInterval * 1000);
+}
+
+
 
 //Keep trying to send gameSessionId in case the server isn't ready yet
 function sendGameSessionData() {
