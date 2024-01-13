@@ -20,7 +20,7 @@
 	"MaxPlayerCountVIP": 2,
 	"MaxPlayerCountBASIC": 1,
 	"MaxStreamers": 1,
-	"CirrusServerExperienceType": "Vip",
+	"CirrusServerExperienceType": "Basic",
 	"VipAppLocation": "C:\\Watchmaker\\application\\Watch_France.exe",
 	"BasicAppLocation": "C:\\Watchmaker\\application\\Watch_France.exe",
     "AppArgs": "-AudioMixer -renderOffScreen",

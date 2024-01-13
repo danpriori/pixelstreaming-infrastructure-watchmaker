@@ -48,7 +48,7 @@ export const PlayerUserVip = ({
                 /* connect(response.url);
                 updateKickButton(0); */
 
-                setSignallingServerURL(response.url + '?PlayerUserType=' + playerUserType);
+                    setSignallingServerURL(response.url + '?PlayerUserType=' + playerUserType);
 
                 }
             } else {

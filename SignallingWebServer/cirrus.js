@@ -1102,6 +1102,8 @@ function getExternalIP() {
 		res.on('end', () => {
 			const data = JSON.parse(body);
 			serverPublicIp = data.ip;
+			
+			console.log('External IP: ', serverPublicIp);
 
 			setupMatchmaker();
 		});
@@ -1111,9 +1113,12 @@ function getExternalIP() {
 	req.end();
 }
 
-if (serverPublicIp === '') {
+if (serverPublicIp == '' || typeof serverPublicIp == 'undefined') {
+	console.log(' serverPublicIp is empty or undefined. Get external IP');
 	getExternalIP();
 } else {
+	console.log(' serverPublicIp is not empty: ',serverPublicIp,' . Call matchmaker connection');
+
 	setupMatchmaker();
 }
 
