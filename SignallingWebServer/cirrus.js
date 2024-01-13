@@ -1102,10 +1102,14 @@ function getExternalIP() {
 		res.on('end', () => {
 			const data = JSON.parse(body);
 			serverPublicIp = data.ip;
-			
+
 			console.log('External IP: ', serverPublicIp);
 
 			setupMatchmaker();
+
+			
+			resetProcess();
+
 		});
 	});
 
@@ -1120,6 +1124,10 @@ if (serverPublicIp == '' || typeof serverPublicIp == 'undefined') {
 	console.log(' serverPublicIp is not empty: ',serverPublicIp,' . Call matchmaker connection');
 
 	setupMatchmaker();
+
+	
+	resetProcess();
+
 }
 
 /**
@@ -1465,5 +1473,3 @@ function resetProcess() {
 	streamersCount = 0; // improve to support multiple streamers to allow many sessions per Cirrus/SS server
 
 }
-
-resetProcess();
